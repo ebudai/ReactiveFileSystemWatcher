@@ -83,10 +83,9 @@ public class Unit
             events.Where(change => change.ChangeType is FileSystemChange.ChangeTypes.Add).Subscribe(_ => adds++);
             events.Where(change => change.ChangeType is not FileSystemChange.ChangeTypes.Add).Subscribe(_ => others++);
 
-            Process process = new()
-            {
-                StartInfo = new("xcopy.exe", $"{tempfolder.FullName} {destination.FullName} /Y /E /I")
-            };
+            Process process = OperatingSystem.IsWindows()
+                ? new() { StartInfo = new("xcopy.exe", $"{tempfolder.FullName} {destination.FullName} /Y /E /I") }
+                : new() { StartInfo = new($"cp -a {tempfolder.FullName}. {destination.FullName}") };
 
             process.Start();
             await process.WaitForExitAsync();
