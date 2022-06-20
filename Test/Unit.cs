@@ -87,6 +87,8 @@ public class Unit
                 ? new() { StartInfo = new("xcopy.exe", $"{tempfolder.FullName} {destination.FullName} /Y /E /I") }
                 : new() { StartInfo = new() { FileName = "/bin/bash", Arguments = $"cp -a {tempfolder.FullName}/ {destination.Parent.FullName}/" } };
 
+            Console.WriteLine(destination.Parent.FullName);
+
             process.Start();
             await process.WaitForExitAsync();
 
