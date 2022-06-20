@@ -60,12 +60,11 @@ public class Unit
         const string basefolder = "AddFolder";
         const string filename = "added.file";
         DeleteBaseFolder(basefolder);
-        Directory.CreateDirectory(basefolder);
 
         DirectoryInfo tempfolder = null;
-        DirectoryInfo destination = null;
+        DirectoryInfo destination = new(basefolder);
 
-        using ReactiveFileSystemWatcher watcher = new(root: basefolder);
+        using ReactiveFileSystemWatcher watcher = new(root: destination.Parent.FullName);
 
         try
         {
@@ -74,8 +73,6 @@ public class Unit
             FileInfo tempFile = new(Path.Combine(tempfolder.FullName, filename));
             File.WriteAllText(tempFile.FullName, "testtest");
 
-            destination = new(basefolder);
-
             int adds = 0;
             int others = 0;
 
@@ -83,12 +80,7 @@ public class Unit
             events.Where(change => change.ChangeType is FileSystemChange.ChangeTypes.Add).Subscribe(_ => adds++);
             events.Where(change => change.ChangeType is not FileSystemChange.ChangeTypes.Add).Subscribe(_ => others++);
 
-            Process process = OperatingSystem.IsWindows()
-                ? new() { StartInfo = new("xcopy.exe", $"{tempfolder.FullName} {destination.FullName} /Y /E /I") }
-                : new() { StartInfo = new() { FileName = "/bin/bash", Arguments = @$"-c ""cp -a {tempfolder.FullName}/ {destination.Parent.FullName}/""" } };
-
-            process.Start();
-            await process.WaitForExitAsync();
+            Directory.Move(tempfolder.FullName, destination.FullName);
 
             await Task.Delay(WAIT);
 
@@ -97,10 +89,7 @@ public class Unit
         }
         finally
         {
-            tempfolder?.Delete(recursive: true);
             DeleteBaseFolder(basefolder);
-            var processes = Process.GetProcessesByName("xcopy");
-            foreach (var process in processes) process.Kill();
         }
     }
 
