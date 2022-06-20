@@ -97,7 +97,6 @@ public class Unit
         }
         finally
         {
-            Debug.WriteLine("cleaning up");
             tempfolder?.Delete(recursive: true);
             DeleteBaseFolder(basefolder);
             var processes = Process.GetProcessesByName("xcopy");
