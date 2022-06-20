@@ -85,7 +85,7 @@ public class Unit
 
             Process process = OperatingSystem.IsWindows()
                 ? new() { StartInfo = new("xcopy.exe", $"{tempfolder.FullName} {destination.FullName} /Y /E /I") }
-                : new() { StartInfo = new() { UseShellExecute = true, FileName = "/bin/bash", Arguments = $"cp -a {tempfolder.FullName}/ {destination.Parent.FullName}/" } };
+                : new() { StartInfo = new() { FileName = "/bin/bash", Arguments = $"cp -a {tempfolder.FullName}/ {destination.Parent.FullName}/" } };
 
             process.Start();
             await process.WaitForExitAsync();
