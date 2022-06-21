@@ -4,31 +4,49 @@ namespace Test;
 
 public class Integration
 {
-    [Fact]
-    public void ErrorHandling()
+    private static void DeleteBaseFolder(string folder)
     {
-        Assert.False(OperatingSystem.IsWindows());
-        
-        //const string PATH = nameof(ErrorHandling);
+        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+    }
+
+    [Fact]
+    public async Task CustomErrorHandling()
+    {
+        const string PATH = nameof(CustomErrorHandling);
+
+        int errors = 0;
+
+        DeleteBaseFolder(PATH);
+        Directory.CreateDirectory(PATH);
 
         try
         {
+            using ReactiveFileSystemWatcher watcher = new(PATH);
 
-        }
+            watcher.Error += HandleError;
+            InduceError(PATH);
+
+            await Task.Delay(500);
+
+            Assert.True(errors > 0);
+
+            errors = 0;
+            Directory.CreateDirectory(PATH);
+
+            watcher.Error -= HandleError;
+            watcher.Start();
+            InduceError(PATH);
+
+            await Task.Delay(500);
+
+            Assert.Equal(0, errors);
+        }        
         finally
-        { 
-
-        }
-        //using ReactiveFileSystemWatcher watcher = new(PATH);
-    }
-
-    private static void InduceError(string path)
-    {
-        for (int i = 0; i < 10000000; i++)
         {
-            var name = Path.Combine(path, i.ToString());
-            File.Create(name);
-            File.Delete(name);
+            DeleteBaseFolder(PATH);
         }
+        
+        void HandleError(object sender, ErrorEventArgs e) => errors++;
+        static void InduceError(string path) => DeleteBaseFolder(path);
     }
 }
