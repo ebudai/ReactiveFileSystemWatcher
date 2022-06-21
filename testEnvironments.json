@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1",
   "environments": [
     // See https://aka.ms/remotetesting for more details
@@ -7,7 +7,7 @@
       "name": "WSL Ubuntu",
       "type": "wsl",
       "wslDistribution": "Ubuntu"
-    }//,
+    } //,
     //{
     //  "name": "Docker dotnet/sdk",
     //  "type": "docker",

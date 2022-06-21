@@ -1,4 +1,5 @@
 ﻿using Budaisoft.FileSystem;
+using System.Reflection;
 
 namespace Test;
 
@@ -24,7 +25,7 @@ public class Integration
             using ReactiveFileSystemWatcher watcher = new(PATH);
 
             watcher.Error += HandleError;
-            InduceError(PATH);
+            InduceError(watcher);
 
             await Task.Delay(500);
 
@@ -35,7 +36,7 @@ public class Integration
 
             watcher.Error -= HandleError;
             watcher.Start();
-            InduceError(PATH);
+            InduceError(watcher);
 
             await Task.Delay(500);
 
@@ -47,6 +48,12 @@ public class Integration
         }
         
         void HandleError(object sender, ErrorEventArgs e) => errors++;
-        static void InduceError(string path) => DeleteBaseFolder(path);
+        static void InduceError(ReactiveFileSystemWatcher watcher)
+        {
+            var innerWatcher = typeof(ReactiveFileSystemWatcher).GetField("_watcher", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(watcher);
+            var method = typeof(FileSystemWatcher).GetMethod("OnError", BindingFlags.Instance | BindingFlags.NonPublic);
+            ErrorEventArgs args = new(new Exception("test exception"));
+            method.Invoke(innerWatcher, new object[] { args });
+        }
     }
 }
