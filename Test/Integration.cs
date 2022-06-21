@@ -5,11 +5,6 @@ namespace Test;
 
 public class Integration
 {
-    private static void DeleteBaseFolder(string folder)
-    {
-        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
-    }
-
     [Fact]
     public async Task CustomErrorHandling()
     {
@@ -35,7 +30,6 @@ public class Integration
             Directory.CreateDirectory(PATH);
 
             watcher.Error -= HandleError;
-            watcher.Start();
             InduceError(watcher);
 
             await Task.Delay(500);

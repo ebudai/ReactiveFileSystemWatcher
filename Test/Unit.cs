@@ -6,17 +6,10 @@ namespace Test;
 
 public class Unit
 {
-    private const int WAIT = ReactiveFileSystemWatcher.DEFAULT_TEMPORAL_RESOLUTION_MILLIS * 2;
-
-    private static void DeleteBaseFolder(string folder)
-    {
-        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
-    }
-
     [Fact]
     public async Task AddFile()
     {
-        const string basefolder = "AddFile";
+        const string basefolder = nameof(AddFile);
         const string filename = "Add.file";
         FileInfo destination = new(Path.Combine(basefolder, filename));
         
@@ -183,7 +176,7 @@ public class Unit
     [Fact]
     public async Task ChangeFile()
     {
-        const string basefolder = "ChangeFile";
+        const string basefolder = nameof(ChangeFile);
         const string filename = "Change.file";
         
         int changes = 0;
@@ -216,7 +209,7 @@ public class Unit
         finally
         {
             DeleteBaseFolder(basefolder);
-        }        
+        }
     }
 
     [Fact]

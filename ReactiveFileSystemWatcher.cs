@@ -12,9 +12,12 @@ namespace Budaisoft.FileSystem
     public class ReactiveFileSystemWatcher : IDisposable, IObservable<List<FileSystemChange>>
     {
         /// <summary>
-        ///     Default value for temporal resolution.  All changes within this timeframe will be published as one list.
+        ///     Timespan over which changes are buffered into a list.
         /// </summary>
-        public const int DEFAULT_TEMPORAL_RESOLUTION_MILLIS = 50;
+        /// <remarks>
+        ///     Experments show that setting this to a value under 25ms will produce dropped events.  DO NOT DO.
+        /// </remarks>
+        public static TimeSpan Latency { get; set; } = TimeSpan.FromMilliseconds(DEFAULT_LATENCY_MILLIS);
 
         /// <summary>
         ///     Error event.  Wraps <see cref="_watcher"/>.<see cref="Error"/>
@@ -31,18 +34,15 @@ namespace Budaisoft.FileSystem
         /// <remarks>
         ///     Wildcards don't work.
         /// </remarks>
-        internal string[] Ignore { get; }
+        internal string[] IgnoredFolders { get; }
 
         /// <summary>
-        ///     Timespan over which changes are buffered into a list.
+        ///     Default value for temporal resolution.  All changes within this timeframe will be published as one list.
         /// </summary>
-        /// <remarks>
-        ///     Experments show that setting this to a value under 25ms will produce dropped events.  DO NOT DO.
-        /// </remarks>
-        internal TimeSpan TemporalResolution { get; }
+        private const int DEFAULT_LATENCY_MILLIS = 50;
 
         /// <summary>
-        ///     Observable list of <see cref="FileSystemChange"/>, containing all changes which occurred within the last <see cref="TemporalResolution"/> ms.
+        ///     Observable list of <see cref="FileSystemChange"/>, containing all changes which occurred within the last <see cref="Latency"/> ms.
         /// </summary>
         /// <remarks>
         ///     The list will not be empty.  All changes will be distinct, and in order of their occurrence.
@@ -73,20 +73,18 @@ namespace Budaisoft.FileSystem
         ///     Initializes a new instance of the <see cref="ReactiveFileSystemWatcher"/> class.
         /// </summary>
         /// <param name="root">Top-level folder name to watch.  Defaults to current folder.</param>
-        /// <param name="ignore">Files/folders to ignore changes of.  Defaults to none.</param>
+        /// <param name="ignoredFolders">Files/folders to ignore changes of.  Defaults to none.</param>
         /// <param name="filter">Limit watching to this filter. Defaults to "*".</param>
         /// <param name="startRunning">Whether or not to listen immediately.  Defaults to true.</param>
         /// <param name="recurse">Whether or not to listen for changes inside subfolders.  Defaults to true.</param>
-        /// <param name="temporalResolution">Timeframe over which changes are batched.  Defaults to <see cref="DEFAULT_TEMPORAL_RESOLUTION_MILLIS"/></param>
         /// <remarks>
         ///     For this to do anything, you must <see cref="Subscribe(IObserver{List{FileSystemChange}})"/> to the instance.
         /// </remarks>
-        public ReactiveFileSystemWatcher(string root = @"\", string[] ignore = null, string filter = "*", bool startRunning = true, bool recurse = true, TimeSpan temporalResolution = default)
+        public ReactiveFileSystemWatcher(string root = @"\", string[] ignoredFolders = null, string filter = "*", bool startRunning = true, bool recurse = true)
         {
-            Ignore = ignore is null ? Array.Empty<string>() : ignore;
-            TemporalResolution = temporalResolution == default ? TimeSpan.FromMilliseconds(DEFAULT_TEMPORAL_RESOLUTION_MILLIS) : temporalResolution;
+            IgnoredFolders = ignoredFolders ?? Array.Empty<string>();
 
-            _snapshots = new ConcurrentCache<string, Snapshot>(folder => new Snapshot(folder, this));
+            _snapshots = new ConcurrentCache<string, Snapshot>(folder => new Snapshot(folder));
             _root = root;
 
             _watcher = new FileSystemWatcher(_root)
@@ -122,7 +120,7 @@ namespace Budaisoft.FileSystem
 
             _events = Observable.Merge(changed, renamed, deleted, created)
                 .Distinct()
-                .BufferWhenAvailable(TemporalResolution)
+                .BufferWhenAvailable(Latency)
                 .Select(GetChanges)
                 .Publish();
 
@@ -134,10 +132,11 @@ namespace Budaisoft.FileSystem
         /// </summary>
         private void ResetSnapshots()
         {
-            _snapshots[_root] = new Snapshot(_root, this);
+            _snapshots[_root] = new Snapshot(_root);
             foreach (var subfolder in Directory.EnumerateDirectories(_root, "*.*", SearchOption.AllDirectories))
             {
-                _snapshots[subfolder] = new Snapshot(subfolder, this);
+                if (IsIgnored(subfolder)) continue;
+                _snapshots[subfolder] = new Snapshot(subfolder);
             }
         }
 
@@ -201,8 +200,11 @@ namespace Budaisoft.FileSystem
                     continue;
                 }
 
+                // bail if this is an ignored folder
+                if (IsIgnored(path)) continue;
+
                 // take a snapshot of the parent
-                var snapshot = new Snapshot(parent, this);
+                var snapshot = new Snapshot(parent);
 
                 // enumerate the differences between the snapshots
                 var diff = _snapshots[parent].EnumerateDifferences(snapshot);
@@ -216,6 +218,18 @@ namespace Budaisoft.FileSystem
             }
 
             return changes;
+        }
+
+        private bool IsIgnored(string path)
+        {
+            var folder = new DirectoryInfo(path);
+            var relativePath = folder.FullName.Substring(_root.Length);
+            var parts = relativePath.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var ignored in IgnoredFolders)
+            {
+                if (parts.Contains(ignored)) return true;
+            }
+            return false;
         }
     }
 

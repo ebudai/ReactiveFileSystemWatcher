@@ -13,21 +13,13 @@ namespace Budaisoft.FileSystem
     internal class Snapshot
     {
         private readonly List<FileSystemObject> _contents = new List<FileSystemObject>();
-        private readonly TimeSpan _temporalResolution = TimeSpan.FromMilliseconds(250);
 
         /// <summary>
         ///     Instantiates a snapshot for a folder
         /// </summary>
         /// <param name="folder">folder to take a snapshot of</param>
-        internal Snapshot(string folder, ReactiveFileSystemWatcher watcher)
+        internal Snapshot(string folder)
         {
-            _temporalResolution = watcher.TemporalResolution;
-
-            foreach (var ignore in watcher.Ignore)
-            {
-                if (folder.StartsWith(ignore, ignoreCase: false, culture: CultureInfo.InvariantCulture)) return;
-            }
-
             foreach (var entry in new DirectoryInfo(folder).EnumerateFileSystemInfos("*", SearchOption.TopDirectoryOnly))
             {
                 _contents.Add(new FileSystemObject
@@ -45,7 +37,7 @@ namespace Budaisoft.FileSystem
         ///     Enumerates the differences between this snapshot and a more recent snapshot
         /// </summary>
         /// <param name="currentSnapshot">the other, more recent snapshot</param>
-        /// <returns></returns>
+        /// <returns>a list of the changes between this and the newer snapshot</returns>
         internal List<FileSystemChange> EnumerateDifferences(Snapshot currentSnapshot)
         {
             if (_contents.Count == 0)
@@ -115,7 +107,7 @@ namespace Budaisoft.FileSystem
                     }
 
                     // check to see if the file has been changed within _temporalResolution (in addition to being renamed and/or moved)
-                    if (snapshotItem.LastWriteTime - item.LastWriteTime > _temporalResolution)
+                    if (snapshotItem.LastWriteTime - item.LastWriteTime > ReactiveFileSystemWatcher.Latency)
                     {
                         changes.Add(FileSystemChange.Change(snapshotItem));
                     }
