@@ -17,8 +17,6 @@ public class Feature
 
         DeleteBaseFolder(basefolder);
         
-        ReactiveFileSystemWatcher watcher = null;
-
         try
         {
             var parent = Directory.CreateDirectory(basefolder);
@@ -30,7 +28,7 @@ public class Feature
             FileInfo childFile = new(Path.Combine(child.FullName, filename));
             await File.WriteAllTextAsync(childFile.FullName, "first");
 
-            watcher = new(root: basefolder, ignoredFolders: new[] { subfolder });
+            using ReactiveFileSystemWatcher watcher = new(root: basefolder, ignoredFolders: new[] { subfolder });
             var events = watcher.SelectMany(_ => _);
             events.Where(change => change.ChangeType is FileSystemChange.ChangeTypes.Change).Subscribe(_ => changes++);
             events.Where(change => change.ChangeType is not FileSystemChange.ChangeTypes.Change).Subscribe(_ => other++);
@@ -44,7 +42,6 @@ public class Feature
         }
         finally
         {
-            watcher?.Dispose();
             DeleteBaseFolder(basefolder);
         }
 

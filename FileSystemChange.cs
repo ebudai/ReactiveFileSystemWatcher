@@ -14,10 +14,10 @@ namespace Budaisoft.FileSystem
         public string FullName;
         public string OldName; // used for rename only
 
-        internal static FileSystemChange Add(FileSystemObject item) => new FileSystemChange() { ChangeType = ChangeTypes.Add, FullName = item.Filename };
-        internal static FileSystemChange Delete(FileSystemObject item) => new FileSystemChange() { ChangeType = ChangeTypes.Delete, FullName = item.Filename };
-        internal static FileSystemChange Change(FileSystemObject item) => new FileSystemChange() { ChangeType = ChangeTypes.Change, FullName = item.Filename };
-        internal static FileSystemChange Rename(FileSystemObject from, FileSystemObject to) => new FileSystemChange() 
+        internal static FileSystemChange Added(FileSystemObject item) => new FileSystemChange() { ChangeType = ChangeTypes.Add, FullName = item.Filename };
+        internal static FileSystemChange Deleted(FileSystemObject item) => new FileSystemChange() { ChangeType = ChangeTypes.Delete, FullName = item.Filename };
+        internal static FileSystemChange Changed(FileSystemObject item) => new FileSystemChange() { ChangeType = ChangeTypes.Change, FullName = item.Filename };
+        internal static FileSystemChange Renamed(FileSystemObject from, FileSystemObject to) => new FileSystemChange() 
         {
             ChangeType = ChangeTypes.Rename, 
             FullName = to.Filename, 

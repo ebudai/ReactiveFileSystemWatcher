@@ -1,7 +1,6 @@
 ﻿// Copyright (c) 2022 Eric Budai, All Rights Reserved
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -44,13 +43,13 @@ namespace Budaisoft.FileSystem
             {
                 // we know both snapshots can't be empty, as that has no change so BufferWhenAvailable() would not return.                    
                 // so, all file system objects in other are Adds
-                return currentSnapshot._contents.Select(FileSystemChange.Add).ToList();
+                return currentSnapshot._contents.Select(FileSystemChange.Added).ToList();
             }
 
             if (currentSnapshot._contents.Count == 0)
             {
                 // this snapshot is not empty, more recent one is -> all items have been deleted
-                return _contents.Select(FileSystemChange.Delete).ToList();
+                return _contents.Select(FileSystemChange.Deleted).ToList();
             }
 
             var max = Math.Max(_contents.Count, currentSnapshot._contents.Count);
@@ -67,7 +66,7 @@ namespace Budaisoft.FileSystem
                     if (currentSnapshotIndex < currentSnapshot._contents.Count)
                     {
                         var added = currentSnapshot._contents.GetRange(currentSnapshotIndex, currentSnapshot._contents.Count - currentSnapshotIndex);
-                        changes.AddRange(added.Select(FileSystemChange.Add));
+                        changes.AddRange(added.Select(FileSystemChange.Added));
                     }
                     break;
                 }
@@ -78,7 +77,7 @@ namespace Budaisoft.FileSystem
                     if (oldSnapshotIndex < _contents.Count)
                     {
                         var removed = _contents.GetRange(oldSnapshotIndex, _contents.Count - oldSnapshotIndex);
-                        changes.AddRange(removed.Select(FileSystemChange.Delete));
+                        changes.AddRange(removed.Select(FileSystemChange.Deleted));
                     }
                     break;
                 }
@@ -89,13 +88,13 @@ namespace Budaisoft.FileSystem
                 if (compare < 0)
                 {
                     // item appears in this snapshot, but not in the more recent one -> the item has been deleted
-                    changes.Add(FileSystemChange.Delete(item));
+                    changes.Add(FileSystemChange.Deleted(item));
                     ++oldSnapshotIndex;
                 }
                 else if (compare > 0)
                 {
                     // item does not appear in this snapshot, but is in the more recent one -> the item has been added
-                    changes.Add(FileSystemChange.Add(snapshotItem));
+                    changes.Add(FileSystemChange.Added(snapshotItem));
                     ++currentSnapshotIndex;
                 }
                 else // compare == 0
@@ -103,13 +102,13 @@ namespace Budaisoft.FileSystem
                     if (item.Filename != snapshotItem.Filename)
                     {
                         // item has been renamed (and possibly moved)
-                        changes.Add(FileSystemChange.Rename(item, snapshotItem));
+                        changes.Add(FileSystemChange.Renamed(item, snapshotItem));
                     }
 
-                    // check to see if the file has been changed within _temporalResolution (in addition to being renamed and/or moved)
+                    // check to see if the file has been changed within Latency (in addition to being renamed and/or moved)
                     if (snapshotItem.LastWriteTime - item.LastWriteTime > ReactiveFileSystemWatcher.Latency)
                     {
-                        changes.Add(FileSystemChange.Change(snapshotItem));
+                        changes.Add(FileSystemChange.Changed(snapshotItem));
                     }
 
                     ++oldSnapshotIndex;
