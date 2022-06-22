@@ -48,6 +48,65 @@ public class Unit
     }
 
     [Fact]
+    public async Task AddFiles()
+    {
+        const string basefolder = nameof(AddFile);
+        const string filename = "Add.file";
+
+        int adds = 0;
+        int others = 0;
+
+        FileInfo destination = new(Path.Combine(basefolder, filename));
+
+        DeleteBaseFolder(basefolder);
+        Directory.CreateDirectory(basefolder);
+        List<FileInfo> tempfiles = new();
+
+        try
+        {
+            for (var i = 0; i != 10; i++)
+            {
+                tempfiles.Add(new(Path.Combine(Path.GetTempPath(), filename + i)));
+            }
+
+            foreach (var file in tempfiles)
+            {
+                using var stream = File.Create(file.FullName);
+            }
+
+            foreach (var file in tempfiles)
+            {
+                File.WriteAllText(file.FullName, "test");
+            }
+
+            for (var i = 0; i != 5; i++)
+            {
+                File.Move(tempfiles[i].FullName, destination.FullName + i);
+            }
+
+            using ReactiveFileSystemWatcher watcher = new(root: basefolder);
+            var events = watcher.SelectMany(_ => _);
+            events.Where(change => change.ChangeType is FileSystemChange.ChangeTypes.Add).Subscribe(_ => adds++);
+            events.Where(change => change.ChangeType is not FileSystemChange.ChangeTypes.Add).Subscribe(_ => others++);
+
+            for (var i = 5; i != 10; i++)
+            {
+                File.Move(tempfiles[i].FullName, destination.FullName + i);
+            }
+
+            await Task.Delay(WAIT);
+
+            Assert.Equal(5, adds);
+            Assert.Equal(0, others);
+        }
+        finally
+        {
+            foreach (var file in tempfiles) file.Delete();
+            DeleteBaseFolder(basefolder);
+        }
+    }
+
+    [Fact]
     public async Task AddFolder()
     {
         const string basefolder = "AddFolder";
