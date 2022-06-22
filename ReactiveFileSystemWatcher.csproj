@@ -3,6 +3,24 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <RootNamespace>Budaisoft.FileSystem</RootNamespace>
+    <AssemblyName>Budaisoft.FileSystem.ReactiveFileSystemWatcher</AssemblyName>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Copyright>Eric Budai</Copyright>
+    <Description>Perfect accuracy, low latency file system watcher</Description>
+    <RepositoryUrl>https://github.com/ebudai/ReactiveFileSystemWatcher.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/ebudai/ReactiveFileSystemWatcher.git</PackageProjectUrl>
+    <PackageTags>FileSystemWatcher, Observable, Reactive, Rx</PackageTags>
+    <PackageIcon>Buddha-Statue-icon.png</PackageIcon>
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,4 +35,15 @@
     <PackageReference Include="System.Reactive" Version="5.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="images\Buddha-Statue-icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" pack="true" PackagePath="." />
+  </ItemGroup>
 </Project>
