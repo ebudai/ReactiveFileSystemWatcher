@@ -132,6 +132,8 @@ public class Unit
             events.Where(change => change.ChangeType is FileSystemChange.ChangeTypes.Add).Subscribe(_ => adds++);
             events.Where(change => change.ChangeType is not FileSystemChange.ChangeTypes.Add).Subscribe(_ => others++);
 
+            await Task.Delay(WAIT);
+
             Directory.Move(tempfolder.FullName, destination.FullName);
 
             await Task.Delay(WAIT);
