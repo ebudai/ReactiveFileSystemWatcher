@@ -12,7 +12,7 @@ namespace Budaisoft.FileSystem
     public class ReactiveFileSystemWatcher : IDisposable, IObservable<List<FileSystemChange>>
     {
         /// <summary>
-        ///     Timespan over which changes are buffered into a list.
+        ///     Timespan over which changes are buffered into a list.  Must be set BEFORE instantiation.
         /// </summary>
         /// <remarks>
         ///     Experments show that setting this to a value under 25ms will produce dropped events.  DO NOT DO.
@@ -80,7 +80,7 @@ namespace Budaisoft.FileSystem
         /// <remarks>
         ///     For this to do anything, you must <see cref="Subscribe(IObserver{List{FileSystemChange}})"/> to the instance.
         /// </remarks>
-        public ReactiveFileSystemWatcher(string root = @"\", string[] ignoredFolders = null, string filter = "*", bool startRunning = true, bool recurse = true)
+        public ReactiveFileSystemWatcher(string root = ".", string[] ignoredFolders = null, string filter = "*", bool startRunning = true, bool recurse = true)
         {
             IgnoredFolders = ignoredFolders ?? Array.Empty<string>();
 
